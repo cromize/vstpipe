@@ -1,6 +1,6 @@
 # vstpipe
 
-Not designed for low-latency stream! (glitches)
+Not designed for low-latency stream! It kinda works for buffer size >= 256.
 
 Simple VST plugin for piping audio out of DAW. It uses non-blocking named pipe for streaming audio. Useful for piping DAW audio into obs, when low-latency ASIO is used as main driver.
 

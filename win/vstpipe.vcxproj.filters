@@ -16,13 +16,13 @@
     <ClCompile Include="..\source\vstpipe.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\source\vst2.x\audioeffect.cpp">
+    <ClCompile Include="C:\Users\Mike\Downloads\vst_sdk2_4_rev2\vstsdk2.4\public.sdk\source\vst2.x\audioeffect.cpp">
       <Filter>Source Files\vst2.x</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\source\vst2.x\audioeffectx.cpp">
+    <ClCompile Include="C:\Users\Mike\Downloads\vst_sdk2_4_rev2\vstsdk2.4\public.sdk\source\vst2.x\audioeffectx.cpp">
       <Filter>Source Files\vst2.x</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\source\vst2.x\vstplugmain.cpp">
+    <ClCompile Include="C:\Users\Mike\Downloads\vst_sdk2_4_rev2\vstsdk2.4\public.sdk\source\vst2.x\vstplugmain.cpp">
       <Filter>Source Files\vst2.x</Filter>
     </ClCompile>
   </ItemGroup>
@@ -39,13 +39,13 @@
     <ClInclude Include="..\source\vstpipe.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\source\vst2.x\aeffeditor.h">
+    <ClInclude Include="C:\Users\Mike\Downloads\vst_sdk2_4_rev2\vstsdk2.4\public.sdk\source\vst2.x\aeffeditor.h">
       <Filter>Source Files\vst2.x</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\source\vst2.x\audioeffect.h">
+    <ClInclude Include="C:\Users\Mike\Downloads\vst_sdk2_4_rev2\vstsdk2.4\public.sdk\source\vst2.x\audioeffect.h">
       <Filter>Source Files\vst2.x</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\source\vst2.x\audioeffectx.h">
+    <ClInclude Include="C:\Users\Mike\Downloads\vst_sdk2_4_rev2\vstsdk2.4\public.sdk\source\vst2.x\audioeffectx.h">
       <Filter>Source Files\vst2.x</Filter>
     </ClInclude>
   </ItemGroup>

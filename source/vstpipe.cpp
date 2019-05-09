@@ -111,8 +111,8 @@ void VstPipe::processReplacing (float** inputs, float** outputs, VstInt32 sample
     DWORD numBytesWritten = 0;
     BOOL result = WriteFile(
       pipe,
-      inputs[0],
-      sampleFrames * sizeof(float),
+      inputs,
+      2 * sampleFrames * sizeof(float),
       &numBytesWritten,
       NULL // not using overlapped IO
     );
