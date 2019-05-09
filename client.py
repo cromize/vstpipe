@@ -46,16 +46,17 @@ def client():
       print("** pipe connected")
       time.sleep(0.100)
       while running:
-        time.sleep(0.001)
-        stream.write(q.get(timeout=1))
+        time.sleep(0.003)
+        try:
+          stream.write(q.get(timeout=1))
+        except queue.Empty:
+          pass
       pipe_thread.join()
         
     except pywintypes.error as e:
       if e.args[0] == 2:
         time.sleep(1)
         print("* no pipe found")
-    except queue.Empty:
-      pass
 
 if __name__ == '__main__':
   p = pyaudio.PyAudio()
