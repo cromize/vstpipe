@@ -20,9 +20,9 @@ VstPipe::VstPipe (audioMasterCallback audioMaster)
   memset(buf, 0, sizeof(buf));
   pipe = CreateNamedPipe(
     "\\\\.\\pipe\\vstpipe1",
-    PIPE_ACCESS_OUTBOUND,
+    PIPE_ACCESS_DUPLEX,
     PIPE_TYPE_BYTE | PIPE_NOWAIT,
-    1,
+    255,
     0,
     0,
     1, 
@@ -33,7 +33,7 @@ VstPipe::VstPipe (audioMasterCallback audioMaster)
 //-------------------------------------------------------------------------------------------------------
 VstPipe::~VstPipe ()
 {
-  CloseHandle(pipe);
+  DisconnectNamedPipe(pipe);
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -120,16 +120,30 @@ void VstPipe::processReplacing (float** inputs, float** outputs, VstInt32 sample
 
         (*out1++) = (*in1++);
         (*out2++) = (*in2++);
-
     }
 
-    DWORD numBytesWritten = 0;
+    LPDWORD numBytesWritten = 0;
+    DWORD nRead, nTotal, nLeft;
+    PeekNamedPipe(pipe, buf, 8192, &nRead, &nTotal, &nLeft);
+    if (nRead > 0) {
+      DisconnectNamedPipe(pipe);
+      pipe = CreateNamedPipe(
+        "\\\\.\\pipe\\vstpipe1",
+        PIPE_ACCESS_DUPLEX,
+        PIPE_TYPE_BYTE | PIPE_NOWAIT,
+        255,
+        0,
+        0,
+        1, 
+        NULL 
+      );
+    }
+ 
     BOOL result = WriteFile(
       pipe,
       buf,
       2 * bufferSize * sizeof(float),
-      &numBytesWritten,
+      numBytesWritten,
       NULL // not using overlapped IO
-    );
-
+      );
 }
