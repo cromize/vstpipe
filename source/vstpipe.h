@@ -32,6 +32,7 @@ public:
 
 protected:
   HANDLE pipe;
+  float buf[8192];
 	char programName[kVstMaxProgNameLen + 1];
 };
 

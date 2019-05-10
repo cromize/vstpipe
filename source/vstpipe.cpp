@@ -17,6 +17,7 @@ VstPipe::VstPipe (audioMasterCallback audioMaster)
 	canProcessReplacing ();	// supports replacing output
 	vst_strncpy (programName, "Default", kVstMaxProgNameLen);	// default program name
 
+  memset(buf, 0, sizeof(buf));
   pipe = CreateNamedPipe(
     "\\\\.\\pipe\\vstpipe1",
     PIPE_ACCESS_OUTBOUND,
@@ -108,18 +109,27 @@ void VstPipe::processReplacing (float** inputs, float** outputs, VstInt32 sample
     float* out1 = outputs[0];
     float* out2 = outputs[1];
 
+    float *buf_ptr = buf;
+
+    VstInt32 bufferSize = sampleFrames;
+    while (--sampleFrames >= 0)
+    {
+        (*buf_ptr++) = (*in1);
+        (*buf_ptr++) = (*in2);
+        //(*(buf_ptr++ + bufferSize)) = (*in2);
+
+        (*out1++) = (*in1++);
+        (*out2++) = (*in2++);
+
+    }
+
     DWORD numBytesWritten = 0;
     BOOL result = WriteFile(
       pipe,
-      inputs,
-      2 * sampleFrames * sizeof(float),
+      buf,
+      2 * bufferSize * sizeof(float),
       &numBytesWritten,
       NULL // not using overlapped IO
     );
 
-    while (--sampleFrames >= 0)
-    {
-        (*out1++) = (*in1++);
-        (*out2++) = (*in2++);
-    }
 }

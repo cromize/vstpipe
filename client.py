@@ -46,7 +46,7 @@ def client():
       print("** pipe connected")
       time.sleep(0.100)
       while running:
-        time.sleep(0.003)
+        time.sleep(0.010)
         try:
           stream.write(q.get(timeout=1))
         except queue.Empty:
@@ -61,7 +61,7 @@ def client():
 if __name__ == '__main__':
   p = pyaudio.PyAudio()
   stream = p.open(format=pyaudio.paFloat32,
-                  channels=1,
+                  channels=2,
                   rate=44100,
                   output=True)
              
