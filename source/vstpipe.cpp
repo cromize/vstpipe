@@ -34,6 +34,7 @@ VstPipe::VstPipe (audioMasterCallback audioMaster)
 VstPipe::~VstPipe ()
 {
   DisconnectNamedPipe(pipe);
+  CloseHandle(pipe);
 }
 
 //-------------------------------------------------------------------------------------------------------

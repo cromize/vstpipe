@@ -1,14 +1,12 @@
-import os
 import time
-import glob
-import hexdump
 import pyaudio
 import win32pipe, win32file, pywintypes
 
-server_closed = False
-running = True
+server_running = False
+running = False
 
 def pipe_init():
+  global server_running
   hndl = win32file.CreateFile(
     r'\\.\pipe\vstpipe1',
     win32file.GENERIC_READ | win32file.GENERIC_WRITE,
@@ -17,7 +15,7 @@ def pipe_init():
     win32file.OPEN_EXISTING,
     0,
     None)
-  server_closed = False
+  server_running = True
   return hndl
 
 def pipe_read(in_data, frame_count, time_info, status):
@@ -28,17 +26,17 @@ def pipe_read(in_data, frame_count, time_info, status):
     #hexdump.hexdump(adata)
     return (adata, pyaudio.paContinue)
   except pywintypes.error as e:
-    print(e)
     if e.args[0] == 109 or e.args[0] == 233:
       print("** pipe closed")
       running = False
-      server_closed = True
+      server_running = False
       win32file.CloseHandle(hndl)
     return (None, pyaudio.paAbort)
 
 def client_start(pa):
   global hndl
   global running
+  global server_running
   try:
     hndl = pipe_init()
     stream = pa.open(format=pyaudio.paFloat32,
@@ -56,7 +54,7 @@ def client_start(pa):
     if e.args[0] == 2:
       time.sleep(1)
       print("* no pipe found")
-    elif e.args[0] == 231 and server_closed:
+    elif e.args[0] == 231 and not server_running:
       time.sleep(1)
       print("* restart the playback in host")
 
