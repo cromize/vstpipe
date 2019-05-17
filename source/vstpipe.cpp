@@ -17,9 +17,24 @@ VstPipe::VstPipe (audioMasterCallback audioMaster)
 	canProcessReplacing ();	// supports replacing output
 	vst_strncpy (programName, "Default", kVstMaxProgNameLen);	// default program name
 
+
+  // init audio pipe
   memset(buf, 0, sizeof(buf));
   pipe = CreateNamedPipe(
     "\\\\.\\pipe\\vstpipe1",
+    PIPE_ACCESS_DUPLEX,
+    PIPE_TYPE_BYTE | PIPE_NOWAIT,
+    255,
+    0,
+    0,
+    1, 
+    NULL 
+  );
+
+  // init debug pipe
+  memset(dbg_buf, 0, sizeof(dbg_buf));
+  dbg_pipe = CreateNamedPipe(
+    "\\\\.\\pipe\\vstpipedebug",
     PIPE_ACCESS_DUPLEX,
     PIPE_TYPE_BYTE | PIPE_NOWAIT,
     255,
@@ -34,7 +49,7 @@ VstPipe::VstPipe (audioMasterCallback audioMaster)
 VstPipe::~VstPipe ()
 {
   DisconnectNamedPipe(pipe);
-  CloseHandle(pipe);
+  DisconnectNamedPipe(dbg_pipe);
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -117,12 +132,12 @@ void VstPipe::processReplacing (float** inputs, float** outputs, VstInt32 sample
     {
         (*buf_ptr++) = (*in1);
         (*buf_ptr++) = (*in2);
-        //(*(buf_ptr++ + bufferSize)) = (*in2);
 
         (*out1++) = (*in1++);
         (*out2++) = (*in2++);
     }
 
+    // if closed, disconnect pipe
     LPDWORD numBytesWritten = 0;
     DWORD nRead, nTotal, nLeft;
     PeekNamedPipe(pipe, buf, 8192, &nRead, &nTotal, &nLeft);
@@ -139,12 +154,33 @@ void VstPipe::processReplacing (float** inputs, float** outputs, VstInt32 sample
         NULL 
       );
     }
+
+    DEBUG("works");
  
-    BOOL result = WriteFile(
+    // write audio
+    numBytesWritten = 0;
+    WriteFile(
       pipe,
       buf,
       2 * bufferSize * sizeof(float),
       numBytesWritten,
       NULL // not using overlapped IO
       );
+
+    // write debug msg
+    if (dbg_buf[0] != NULL) {
+      numBytesWritten = 0;
+      WriteFile(
+        dbg_pipe,
+        dbg_buf,
+        strlen(dbg_buf),
+        numBytesWritten,
+        NULL // not using overlapped IO
+        );
+      memset(dbg_buf, 0, sizeof(dbg_buf));
+    }
+}
+
+void VstPipe::DEBUG(char msg[]) {
+  vst_strncat(dbg_buf, msg, 8192);
 }

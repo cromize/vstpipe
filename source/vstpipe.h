@@ -30,8 +30,12 @@ public:
 	virtual bool getProductString (char* text);
 	virtual VstInt32 getVendorVersion ();
 
+  virtual void VstPipe::DEBUG(char msg[]);
+
 protected:
   HANDLE pipe;
+  HANDLE dbg_pipe;
+  char dbg_buf[8192];
   float buf[8192];
 	char programName[kVstMaxProgNameLen + 1];
 };
