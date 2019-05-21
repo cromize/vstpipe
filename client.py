@@ -1,5 +1,7 @@
+import sys
 import time
 import pyaudio
+import argparse
 import win32pipe, win32file, pywintypes
 
 class Pipe():
@@ -21,9 +23,7 @@ class Pipe():
 
   def pipe_read(self, in_data, frame_count, time_info, status):
     try:
-      #adata = win32file.ReadFile(self.hndl, 2*4*1024)[1]
-      adata = win32file.ReadFile(self.hndl, 2*4*2048)[1]
-      #print(adata)
+      adata = win32file.ReadFile(self.hndl, 2*4*buffer_size)[1]
       return (adata, pyaudio.paContinue)
     except pywintypes.error as e:
       if e.args[0] == 109 or e.args[0] == 233:
@@ -39,14 +39,14 @@ def client_start(pipe):
     stream = pa.open(format=pyaudio.paFloat32,
                     channels=2,
                     rate=44100,
-                    frames_per_buffer=2048,
+                    frames_per_buffer=buffer_size,
                     output=True,
                     stream_callback=pipe.pipe_read)
     print("** pipe connected")
     stream.start_stream()
     pipe.running = True
     while pipe.running:
-      time.sleep(0.2)
+      time.sleep(0.001)
   except pywintypes.error as e:
     if not pipe.server_running:
       time.sleep(1)
@@ -56,8 +56,23 @@ def client_start(pipe):
       print("* no pipe found")
 
 if __name__ == '__main__':
+  # init parser
+  parser = argparse.ArgumentParser()
+  parser.add_argument("-b", "--buffer", type=int, help='audio buffer size (glitchless size >= 256)')
+  args = parser.parse_args()
+
+  if len(sys.argv) == 1:
+    parser.print_help()
+    sys.exit(1)
+
+  # get buffer size
+  buffer_size = args.buffer
+
+  # init pyaudio
   pa = pyaudio.PyAudio()
   print("** audio output init")
+
+  # init pipe
   pipe = Pipe()
   print("** pipe client init")
   while 1:

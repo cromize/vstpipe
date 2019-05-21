@@ -129,7 +129,7 @@ void VstPipe::processReplacing (float** inputs, float** outputs, VstInt32 sample
     sprintf(tmp, "%d\n", bufferSize);
 
     // kill broken pipe
-    //audio_pipe->check_broken_pipe();
+    audio_pipe->check_broken_pipe();
 
     // send audio data in non-blocking mode
     audio_pipe->send_data(buf, 2 * bufferSize * sizeof(float));
