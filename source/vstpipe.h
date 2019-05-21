@@ -37,7 +37,7 @@ protected:
   Pipe *audio_pipe;
   Pipe *dbg_pipe;
   char dbg_buf[1024];
-  float buf[8192];
+  float buf[16384];
 	char programName[kVstMaxProgNameLen + 1];
 };
 

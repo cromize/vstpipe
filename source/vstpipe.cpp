@@ -19,39 +19,13 @@ VstPipe::VstPipe (audioMasterCallback audioMaster)
 	canProcessReplacing ();	// supports replacing output
 	vst_strncpy (programName, "Default", kVstMaxProgNameLen);	// default program name
 
-  /*
-  // init audio pipe
-  memset(buf, 0, sizeof(buf));
-  pipe = CreateNamedPipe(
-    "\\\\.\\pipe\\vstpipe1",
-    PIPE_ACCESS_DUPLEX,
-    PIPE_TYPE_BYTE | PIPE_NOWAIT,
-    255,
-    0,
-    0,
-    1, 
-    NULL 
-  );
-*/
-  /*
   // init debug pipe
-  memset(dbg_buf, 0, sizeof(dbg_buf));
-  dbg_pipe = CreateNamedPipe(
-    "\\\\.\\pipe\\vstpipedebug",
-    PIPE_ACCESS_DUPLEX,
-    PIPE_TYPE_BYTE | PIPE_NOWAIT,
-    255,
-    0,
-    0,
-    1, 
-    NULL 
-  );
-  */
   dbg_pipe = new Pipe(0);
   dbg_pipe->init();
   memset(dbg_buf, 0, sizeof(dbg_buf));
   DEBUG("[VST] * debug pipe init\n");
 
+  // init audio pipe
   audio_pipe = new Pipe(1);
   audio_pipe->init();
   memset(buf, 0, sizeof(buf));
@@ -140,18 +114,22 @@ void VstPipe::processReplacing (float** inputs, float** outputs, VstInt32 sample
 
     float *buf_ptr = buf;
 
+    // audio is sent in as interleaved stereo
     VstInt32 bufferSize = sampleFrames;
-    while (--sampleFrames >= 0)
-    {
-        (*buf_ptr++) = (*in1);
-        (*buf_ptr++) = (*in2);
+    while (--sampleFrames >= 0) {
+      (*buf_ptr++) = (*in1);
+      (*buf_ptr++) = (*in2);
 
-        (*out1++) = (*in1++);
-        (*out2++) = (*in2++);
+      (*out1++) = (*in1++);
+      (*out2++) = (*in2++);
     }
 
+    // temp
+    char tmp[128] = {};
+    sprintf(tmp, "%d\n", bufferSize);
+
     // kill broken pipe
-    audio_pipe->check_broken_pipe();
+    //audio_pipe->check_broken_pipe();
 
     // send audio data in non-blocking mode
     audio_pipe->send_data(buf, 2 * bufferSize * sizeof(float));
@@ -162,7 +140,7 @@ void VstPipe::processReplacing (float** inputs, float** outputs, VstInt32 sample
 
       // if client received msg, clean buffer
       DWORD nRead, nTotal, nLeft;
-      PeekNamedPipe(dbg_pipe->get_pipe(), 0, 1024, &nRead, &nTotal, &nLeft);
+      PeekNamedPipe(dbg_pipe->get_pipe(), 0, 32, &nRead, &nTotal, &nLeft);
       if (nTotal == 0) {
         memset(dbg_buf, 0, sizeof(dbg_buf));
       }

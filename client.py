@@ -21,7 +21,9 @@ class Pipe():
 
   def pipe_read(self, in_data, frame_count, time_info, status):
     try:
-      adata = win32file.ReadFile(self.hndl, 2*4*1024)[1]
+      #adata = win32file.ReadFile(self.hndl, 2*4*1024)[1]
+      adata = win32file.ReadFile(self.hndl, 2*4*2048)[1]
+      #print(adata)
       return (adata, pyaudio.paContinue)
     except pywintypes.error as e:
       if e.args[0] == 109 or e.args[0] == 233:
@@ -37,13 +39,14 @@ def client_start(pipe):
     stream = pa.open(format=pyaudio.paFloat32,
                     channels=2,
                     rate=44100,
+                    frames_per_buffer=2048,
                     output=True,
                     stream_callback=pipe.pipe_read)
     print("** pipe connected")
     stream.start_stream()
     pipe.running = True
     while pipe.running:
-      time.sleep(0.1)
+      time.sleep(0.2)
   except pywintypes.error as e:
     if not pipe.server_running:
       time.sleep(1)

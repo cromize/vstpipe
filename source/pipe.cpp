@@ -28,7 +28,7 @@ void Pipe::init() {
 void Pipe::check_broken_pipe() {
   // if closed, disconnect pipe
   DWORD nRead, nTotal, nLeft;
-  PeekNamedPipe(pipe, 0, 8192, &nRead, &nTotal, &nLeft);
+  PeekNamedPipe(pipe, 0, 32, &nRead, &nTotal, &nLeft);
   if (nRead > 0) {
     DisconnectNamedPipe(pipe);
     pipe = CreateNamedPipe(
@@ -52,7 +52,7 @@ void Pipe::send_data(void *data, int n) {
     n,
     numBytesWritten,
     NULL // not using overlapped IO
-  );
+    );
 }
 
 HANDLE Pipe::get_pipe() {
