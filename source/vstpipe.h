@@ -3,6 +3,7 @@
 
 #include "public.sdk/source/vst2.x/audioeffectx.h"
 #include "windows.h"
+#include "pipe.h"
 
 //-------------------------------------------------------------------------------------------------------
 class VstPipe : public AudioEffectX
@@ -33,9 +34,9 @@ public:
   virtual void VstPipe::DEBUG(char msg[]);
 
 protected:
-  HANDLE pipe;
-  HANDLE dbg_pipe;
-  char dbg_buf[8192];
+  Pipe *audio_pipe;
+  Pipe *dbg_pipe;
+  char dbg_buf[1024];
   float buf[8192];
 	char programName[kVstMaxProgNameLen + 1];
 };

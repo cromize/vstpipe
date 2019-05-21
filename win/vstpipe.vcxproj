@@ -170,6 +170,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\source\pipe.cpp" />
     <ClCompile Include="..\source\vstpipe.cpp" />
     <ClCompile Include="C:\Users\Mike\Downloads\vst_sdk2_4_rev2\vstsdk2.4\public.sdk\source\vst2.x\audioeffect.cpp" />
     <ClCompile Include="C:\Users\Mike\Downloads\vst_sdk2_4_rev2\vstsdk2.4\public.sdk\source\vst2.x\audioeffectx.cpp" />
@@ -179,6 +180,7 @@
     <ClInclude Include="..\..\..\..\..\pluginterfaces\vst2.x\aeffect.h" />
     <ClInclude Include="..\..\..\..\..\pluginterfaces\vst2.x\aeffectx.h" />
     <ClInclude Include="..\..\..\..\..\pluginterfaces\vst2.x\vstfxstore.h" />
+    <ClInclude Include="..\source\pipe.h" />
     <ClInclude Include="..\source\vstpipe.h" />
     <ClInclude Include="C:\Users\Mike\Downloads\vst_sdk2_4_rev2\vstsdk2.4\public.sdk\source\vst2.x\aeffeditor.h" />
     <ClInclude Include="C:\Users\Mike\Downloads\vst_sdk2_4_rev2\vstsdk2.4\public.sdk\source\vst2.x\audioeffect.h" />

@@ -1,4 +1,6 @@
+#include <stdio.h>
 #include "vstpipe.h"
+#include "pipe.h"
 #include "windows.h"
 
 //-------------------------------------------------------------------------------------------------------
@@ -17,7 +19,7 @@ VstPipe::VstPipe (audioMasterCallback audioMaster)
 	canProcessReplacing ();	// supports replacing output
 	vst_strncpy (programName, "Default", kVstMaxProgNameLen);	// default program name
 
-
+  /*
   // init audio pipe
   memset(buf, 0, sizeof(buf));
   pipe = CreateNamedPipe(
@@ -30,7 +32,8 @@ VstPipe::VstPipe (audioMasterCallback audioMaster)
     1, 
     NULL 
   );
-
+*/
+  /*
   // init debug pipe
   memset(dbg_buf, 0, sizeof(dbg_buf));
   dbg_pipe = CreateNamedPipe(
@@ -43,13 +46,23 @@ VstPipe::VstPipe (audioMasterCallback audioMaster)
     1, 
     NULL 
   );
+  */
+  dbg_pipe = new Pipe(0);
+  dbg_pipe->init();
+  memset(dbg_buf, 0, sizeof(dbg_buf));
+  DEBUG("[VST] * debug pipe init\n");
+
+  audio_pipe = new Pipe(1);
+  audio_pipe->init();
+  memset(buf, 0, sizeof(buf));
+  DEBUG("[VST] * audio pipe init\n");
 }
 
 //-------------------------------------------------------------------------------------------------------
 VstPipe::~VstPipe ()
 {
-  DisconnectNamedPipe(pipe);
-  DisconnectNamedPipe(dbg_pipe);
+  delete audio_pipe;
+  delete dbg_pipe;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -137,50 +150,27 @@ void VstPipe::processReplacing (float** inputs, float** outputs, VstInt32 sample
         (*out2++) = (*in2++);
     }
 
-    // if closed, disconnect pipe
-    LPDWORD numBytesWritten = 0;
-    DWORD nRead, nTotal, nLeft;
-    PeekNamedPipe(pipe, buf, 8192, &nRead, &nTotal, &nLeft);
-    if (nRead > 0) {
-      DisconnectNamedPipe(pipe);
-      pipe = CreateNamedPipe(
-        "\\\\.\\pipe\\vstpipe1",
-        PIPE_ACCESS_DUPLEX,
-        PIPE_TYPE_BYTE | PIPE_NOWAIT,
-        255,
-        0,
-        0,
-        1, 
-        NULL 
-      );
-    }
+    // kill broken pipe
+    audio_pipe->check_broken_pipe();
 
-    DEBUG("works");
- 
-    // write audio
-    numBytesWritten = 0;
-    WriteFile(
-      pipe,
-      buf,
-      2 * bufferSize * sizeof(float),
-      numBytesWritten,
-      NULL // not using overlapped IO
-      );
+    // send audio data in non-blocking mode
+    audio_pipe->send_data(buf, 2 * bufferSize * sizeof(float));
 
     // write debug msg
     if (dbg_buf[0] != NULL) {
-      numBytesWritten = 0;
-      WriteFile(
-        dbg_pipe,
-        dbg_buf,
-        strlen(dbg_buf),
-        numBytesWritten,
-        NULL // not using overlapped IO
-        );
-      memset(dbg_buf, 0, sizeof(dbg_buf));
+      dbg_pipe->send_data(dbg_buf, strlen(dbg_buf));
+
+      // if client received msg, clean buffer
+      DWORD nRead, nTotal, nLeft;
+      PeekNamedPipe(dbg_pipe->get_pipe(), 0, 1024, &nRead, &nTotal, &nLeft);
+      if (nTotal == 0) {
+        memset(dbg_buf, 0, sizeof(dbg_buf));
+      }
     }
 }
 
 void VstPipe::DEBUG(char msg[]) {
-  vst_strncat(dbg_buf, msg, 8192);
+  if (strlen(dbg_buf) < 1023) {
+    vst_strncat(dbg_buf, msg, 1023);
+  }
 }

@@ -25,6 +25,9 @@
     <ClCompile Include="C:\Users\Mike\Downloads\vst_sdk2_4_rev2\vstsdk2.4\public.sdk\source\vst2.x\vstplugmain.cpp">
       <Filter>Source Files\vst2.x</Filter>
     </ClCompile>
+    <ClCompile Include="..\source\pipe.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\..\pluginterfaces\vst2.x\aeffect.h">
@@ -47,6 +50,9 @@
     </ClInclude>
     <ClInclude Include="C:\Users\Mike\Downloads\vst_sdk2_4_rev2\vstsdk2.4\public.sdk\source\vst2.x\audioeffectx.h">
       <Filter>Source Files\vst2.x</Filter>
+    </ClInclude>
+    <ClInclude Include="..\source\pipe.h">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
