@@ -10,14 +10,15 @@ public:
   ~Pipe();
 
   void init();
-  void check_broken_pipe();
-  void send_data(void *data, int n);
-  HANDLE get_pipe();
+  void connectPipe();
+  void disconnectPipe();
+  void sendData(void *data, int n);
+  SOCKET getSock();
 
 private:
   int id;
   char pipe_name[32];
-  HANDLE pipe;
+  SOCKET sock;
 };
 
 #endif

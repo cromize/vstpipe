@@ -19,24 +19,16 @@ VstPipe::VstPipe (audioMasterCallback audioMaster)
 	canProcessReplacing ();	// supports replacing output
 	vst_strncpy (programName, "Default", kVstMaxProgNameLen);	// default program name
 
-  // init debug pipe
-  dbg_pipe = new Pipe(0);
-  dbg_pipe->init();
-  memset(dbg_buf, 0, sizeof(dbg_buf));
-  DEBUG("[VST] * debug pipe init\n");
-
   // init audio pipe
   audio_pipe = new Pipe(1);
   audio_pipe->init();
   memset(buf, 0, sizeof(buf));
-  DEBUG("[VST] * audio pipe init\n");
 }
 
 //-------------------------------------------------------------------------------------------------------
 VstPipe::~VstPipe ()
 {
   delete audio_pipe;
-  delete dbg_pipe;
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -94,7 +86,7 @@ bool VstPipe::getProductString (char* text)
 //------------------------------------------------------------------------
 bool VstPipe::getVendorString (char* text)
 {
-	vst_strncpy (text, "cromize (c) 2019", kVstMaxVendorStrLen);
+	vst_strncpy (text, "VstPipe", kVstMaxVendorStrLen);
 	return true;
 }
 
@@ -114,6 +106,12 @@ void VstPipe::processReplacing (float** inputs, float** outputs, VstInt32 sample
 
     float *buf_ptr = buf;
 
+    if (audio_pipe->getSock()) {
+      audio_pipe->connectPipe();
+    }
+
+    audio_pipe->sendData("lol", 3);
+
     // audio is sent in as interleaved stereo
     VstInt32 bufferSize = sampleFrames;
     while (--sampleFrames >= 0) {
@@ -122,28 +120,6 @@ void VstPipe::processReplacing (float** inputs, float** outputs, VstInt32 sample
 
       (*out1++) = (*in1++);
       (*out2++) = (*in2++);
-    }
-
-    // temp
-    char tmp[128] = {};
-    sprintf(tmp, "%d\n", bufferSize);
-
-    // kill broken pipe
-    audio_pipe->check_broken_pipe();
-
-    // send audio data in non-blocking mode
-    audio_pipe->send_data(buf, 2 * bufferSize * sizeof(float));
-
-    // write debug msg
-    if (dbg_buf[0] != NULL) {
-      dbg_pipe->send_data(dbg_buf, strlen(dbg_buf));
-
-      // if client received msg, clean buffer
-      DWORD nRead, nTotal, nLeft;
-      PeekNamedPipe(dbg_pipe->get_pipe(), 0, 32, &nRead, &nTotal, &nLeft);
-      if (nTotal == 0) {
-        memset(dbg_buf, 0, sizeof(dbg_buf));
-      }
     }
 }
 
