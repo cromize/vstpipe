@@ -1,21 +1,46 @@
 #include <stdio.h>
 #include <ws2tcpip.h>
+#include <chrono>
 #include "pipe.h"
 
 #pragma comment(lib, "Ws2_32.lib")
 
 Pipe::Pipe() {
   sock = -1;
+  running = true;
+  ready = false;
+  main_thread = std::thread(&Pipe::run, this);
 }
 
 Pipe::~Pipe() {
-  disconnectPipe();
+  running = false;
+  main_thread.join();
 }
 
 void Pipe::init() {
   WSADATA wsaData;
   if (WSAStartup(0x202, &wsaData)) {
     return;
+  }
+}
+
+void Pipe::run() {
+  init();
+  while (running) {
+    // connect
+    std::this_thread::sleep_for(std::chrono::duration<double>(0.25));
+    connectPipe();
+
+    if (sock < 0) {
+      continue;
+    }
+
+    // wait for server disconnect 
+    ready = true;
+    while (running && ready) {
+      std::this_thread::sleep_for(std::chrono::duration<double>(0.25));
+    }
+    disconnectPipe();
   }
 }
 
@@ -42,6 +67,7 @@ void Pipe::connectPipe() {
 }
 
 void Pipe::disconnectPipe() {
+  ready = false;
   if (sock >= 0 && closesocket(sock)) {
     // fail
   }
@@ -60,6 +86,6 @@ bool Pipe::recvData(void *data, int n) {
   return true;
 }
 
-SOCKET Pipe::getSock() {
-  return sock;
+bool Pipe::isReady() {
+  return ready;
 }

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <thread>
 #include "vstpipe.h"
 #include "pipe.h"
 #include "windows.h"
@@ -106,9 +107,9 @@ void VstPipe::processReplacing (float** inputs, float** outputs, VstInt32 sample
 
     float *buf_ptr = buf;
 
-    if (audio_pipe->getSock()) {
-      audio_pipe->connectPipe();
-    }
+    //if (audio_pipe->sock) {
+      //audio_pipe->connectPipe();
+    //}
 
     // audio is sent as interleaved stereo
     VstInt32 buffer_size = sampleFrames;
@@ -120,8 +121,10 @@ void VstPipe::processReplacing (float** inputs, float** outputs, VstInt32 sample
       (*out2++) = (*in2++);
     }
 
-    audio_pipe->recvData(buf_ptr, 4);
-    audio_pipe->sendData(buf_ptr, 4);
+    if (audio_pipe->isReady()) {
+      audio_pipe->recvData(buf_ptr, 4);
+      audio_pipe->sendData(buf_ptr, 4);
+    }
     //audio_pipe->sendData(buf_ptr, 2*buffer_size*sizeof(float));
 }
 
