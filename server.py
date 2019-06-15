@@ -15,7 +15,9 @@ class PipeServer():
       with c:
         print("** pipe connected", addr)
         while True:
-          print(c.recv(2024))
+          c.send(b"lolo")
+          print(c.recv(4))
+          #print(c.recv(2*4*1024))
     
 if __name__ == "__main__":
   # init pyaudio

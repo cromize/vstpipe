@@ -4,7 +4,7 @@
 
 #pragma comment(lib, "Ws2_32.lib")
 
-Pipe::Pipe(int id) {
+Pipe::Pipe() {
   sock = -1;
 }
 
@@ -14,9 +14,7 @@ Pipe::~Pipe() {
 
 void Pipe::init() {
   WSADATA wsaData;
-
   if (WSAStartup(0x202, &wsaData)) {
-    // fail
     return;
   }
 }
@@ -32,12 +30,10 @@ void Pipe::connectPipe() {
 
   // check socket
   if (sock < 0) {
-    // fail
     return;
   }
 
   if (connect(sock, (struct sockaddr*) &sa, sizeof(sa))) {
-    // fail
     return;
   }
 
@@ -52,8 +48,16 @@ void Pipe::disconnectPipe() {
   sock = -1;
 }
 
-void Pipe::sendData(void *data, int n) {
-  send(sock, (const char*) data, n, 0);
+bool Pipe::sendData(void *data, int n) {
+  if (n <= 0) return false;
+  send(sock, (char *) data, n, 0);
+  return true;
+}
+
+bool Pipe::recvData(void *data, int n) {
+  if (n <= 0) return false;
+  recv(sock, (char *)data, n, 0);
+  return true;
 }
 
 SOCKET Pipe::getSock() {

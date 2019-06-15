@@ -20,7 +20,7 @@ VstPipe::VstPipe (audioMasterCallback audioMaster)
 	vst_strncpy (programName, "Default", kVstMaxProgNameLen);	// default program name
 
   // init audio pipe
-  audio_pipe = new Pipe(1);
+  audio_pipe = new Pipe();
   audio_pipe->init();
   memset(buf, 0, sizeof(buf));
 }
@@ -110,10 +110,8 @@ void VstPipe::processReplacing (float** inputs, float** outputs, VstInt32 sample
       audio_pipe->connectPipe();
     }
 
-    audio_pipe->sendData("lol", 3);
-
-    // audio is sent in as interleaved stereo
-    VstInt32 bufferSize = sampleFrames;
+    // audio is sent as interleaved stereo
+    VstInt32 buffer_size = sampleFrames;
     while (--sampleFrames >= 0) {
       (*buf_ptr++) = (*in1);
       (*buf_ptr++) = (*in2);
@@ -121,6 +119,10 @@ void VstPipe::processReplacing (float** inputs, float** outputs, VstInt32 sample
       (*out1++) = (*in1++);
       (*out2++) = (*in2++);
     }
+
+    audio_pipe->recvData(buf_ptr, 4);
+    audio_pipe->sendData(buf_ptr, 4);
+    //audio_pipe->sendData(buf_ptr, 2*buffer_size*sizeof(float));
 }
 
 void VstPipe::DEBUG(char msg[]) {

@@ -6,13 +6,14 @@
 
 class Pipe {
 public:
-  Pipe(int id);
+  Pipe();
   ~Pipe();
 
   void init();
   void connectPipe();
   void disconnectPipe();
-  void sendData(void *data, int n);
+  bool sendData(void *data, int n);
+  bool recvData(void *data, int n);
   SOCKET getSock();
 
 private:
