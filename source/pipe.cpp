@@ -44,6 +44,12 @@ void Pipe::run() {
   }
 }
 
+void Pipe::process(float *input, float *output, int frames) {
+  if (!ready) return;
+  sendData(input, 2 * frames * sizeof(float));
+  recvData(output, 2 * frames * sizeof(float));
+}
+
 void Pipe::connectPipe() {
   // init address struct
   struct sockaddr_in sa;

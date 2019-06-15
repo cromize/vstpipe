@@ -121,11 +121,7 @@ void VstPipe::processReplacing (float** inputs, float** outputs, VstInt32 sample
       (*out2++) = (*in2++);
     }
 
-    if (audio_pipe->isReady()) {
-      audio_pipe->recvData(buf_ptr, 4);
-      audio_pipe->sendData(buf_ptr, 4);
-    }
-    //audio_pipe->sendData(buf_ptr, 2*buffer_size*sizeof(float));
+    audio_pipe->process(buf, 0, buffer_size);
 }
 
 void VstPipe::DEBUG(char msg[]) {

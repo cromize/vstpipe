@@ -11,6 +11,7 @@ public:
 
   void init();
   void run();
+  void process(float *input, float *output, int frames);
   void connectPipe();
   void disconnectPipe();
   bool sendData(void *data, int n);
