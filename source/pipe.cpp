@@ -46,6 +46,10 @@ void Pipe::run() {
 
 void Pipe::process(float *input, float *output, int frames) {
   if (!ready) return;
+
+  // send buffer size
+  sendData<uint32_t>(frames);
+
   sendData(input, 2 * frames * sizeof(float));
   recvData(output, 2 * frames * sizeof(float));
 }
@@ -55,9 +59,12 @@ void Pipe::connectPipe() {
   struct sockaddr_in sa;
   memset(&sa, 0, sizeof(sa));
   sa.sin_family = AF_INET;
-  sa.sin_port = htons(4144);
-  inet_pton(AF_INET, "127.0.0.1", &sa.sin_addr.s_addr);
+  sa.sin_port = htons(PIPE_PORT);
+  inet_pton(AF_INET, PIPE_HOST, &sa.sin_addr.s_addr);
   sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+  // Nagle off
+  //setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char*)1, sizeof(int));
 
   // check socket
   if (sock < 0) {
@@ -69,7 +76,7 @@ void Pipe::connectPipe() {
   }
 
   // set non-blocking
-  ioctlsocket(sock, FIONBIO, 0);
+  //ioctlsocket(sock, FIONBIO, 0);
 }
 
 void Pipe::disconnectPipe() {
@@ -82,7 +89,16 @@ void Pipe::disconnectPipe() {
 
 bool Pipe::sendData(void *data, int n) {
   if (n <= 0) return false;
-  send(sock, (char *) data, n, 0);
+
+  int remaining = 0;
+  while (remaining < n) {
+    int actual = send(sock, (char *) data, n, 0);
+    if (actual <= 0) {
+      ready = false;
+      return false;
+    }
+    remaining += actual;
+  }
   return true;
 }
 

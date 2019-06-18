@@ -107,10 +107,6 @@ void VstPipe::processReplacing (float** inputs, float** outputs, VstInt32 sample
 
     float *buf_ptr = buf;
 
-    //if (audio_pipe->sock) {
-      //audio_pipe->connectPipe();
-    //}
-
     // audio is sent as interleaved stereo
     VstInt32 buffer_size = sampleFrames;
     while (--sampleFrames >= 0) {
@@ -121,7 +117,8 @@ void VstPipe::processReplacing (float** inputs, float** outputs, VstInt32 sample
       (*out2++) = (*in2++);
     }
 
-    audio_pipe->process(buf, 0, buffer_size);
+    audio_pipe->sendData<uint8_t>(PipeCommand::AUDIO_PROCESS_COMMAND);
+    //audio_pipe->process(buf, 0, buffer_size);
 }
 
 void VstPipe::DEBUG(char msg[]) {
