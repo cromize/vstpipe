@@ -118,7 +118,7 @@ void VstPipe::processReplacing (float** inputs, float** outputs, VstInt32 sample
     }
 
     audio_pipe->sendData<uint8_t>(PipeCommand::AUDIO_PROCESS_COMMAND);
-    //audio_pipe->process(buf, 0, buffer_size);
+    audio_pipe->process(buf, 0, buffer_size);
 }
 
 void VstPipe::DEBUG(char msg[]) {

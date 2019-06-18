@@ -1,6 +1,6 @@
+#include <chrono>
 #include <stdio.h>
 #include <ws2tcpip.h>
-#include <chrono>
 #include "pipe.h"
 
 #pragma comment(lib, "Ws2_32.lib")
@@ -81,11 +81,22 @@ void Pipe::connectPipe() {
 
 void Pipe::disconnectPipe() {
   ready = false;
-  if (sock >= 0 && closesocket(sock)) {
-    // fail
+  if (sock >= 0) {
+    sendData<uint8_t>(PipeCommand::QUIT_COMMAND);
+    shutdown(sock, SD_SEND);
+    if (closesocket(sock)) {
+      // fail
+    }
   }
   sock = -1;
 }
+
+/*
+bool Pipe::sendData(void *data, int n) {
+  send(sock, (char *)data, n, 0);
+  return true;
+}
+*/
 
 bool Pipe::sendData(void *data, int n) {
   if (n <= 0) return false;

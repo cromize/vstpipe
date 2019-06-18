@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import socket
 import pyaudio
+import time
 
 class PipeCommand:
   NONE_COMMAND = 0
@@ -13,13 +14,15 @@ class PipeServer():
     self.port = port
     self.client_buf = b""
     self.frames = 0
+    self.ready = False
+    self.sock = None
 
   def listen(self, pa):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
       s.bind((self.host, self.port))
       s.listen(1)
-      c, addr = s.accept()
-      with c:
+      self.c, addr = s.accept()
+      with self.c:
         stream = pa.open(format=pyaudio.paFloat32,
                          channels=2,
                          rate=44100,
@@ -28,38 +31,42 @@ class PipeServer():
                          stream_callback=pipe_server.get_audio_chunk)
         stream.start_stream()
         print("** pipe connected", addr)
-        while True:
-          command = c.recv(1)
+        self.ready = True
+        #self.c.setblocking(0)
+        while self.ready:
+          command = self.recvData(1)
           if command == None:
             continue
-          print(command)
+          command = int.from_bytes(command, "big")
           self.do(command)
 
   def get_audio_chunk(self, in_data, frame_count, time_info, status):
     return (self.client_buf, pyaudio.paContinue)
 
-  def recvData(c, n):
+  def recvData(self, n):
     remaining = 0
-    while remaining < n:
-      actual = c.recv(n)
-      if actual <= 0:
-        return
-      remaining += actual
+    buf = b""
+    while len(buf) < n:
+      buf += self.c.recv(n)
+      if (len(buf) <= 0):
+        return False
+    return buf
 
   def process(self):
-    self.frames = int(c.recv(4))
+    self.frames = int.from_bytes(self.recvData(4), "little")
+    print(self.frames)
 
-    self.client_buf = c.recv(2*4*self.frames)
-    c.send(b"")
+    self.client_buf = self.recvData(2*4*self.frames)
+    #print("len:", len(self.client_buf))
+    self.c.send(b"")
 
   def do(self, command):
     if command == PipeCommand.NONE_COMMAND:
-      print("** none command")
+      self.ready = False
     elif command == PipeCommand.QUIT_COMMAND:
-      print("** quit command")
+      self.ready = False
     elif command == PipeCommand.AUDIO_PROCESS_COMMAND:
-      process()
-      print("** audio process command")
+      self.process()
     
 if __name__ == "__main__":
   # init pyaudio
@@ -72,6 +79,10 @@ if __name__ == "__main__":
   # open output audio stream
   pa = pyaudio.PyAudio()
 
-  # listen
-  pipe_server.listen(pa)
-  
+  while True:
+    # listen
+    pipe_server.listen(pa)
+
+    print("** pipe closed")
+    time.sleep(1)
+    
