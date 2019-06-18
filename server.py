@@ -56,7 +56,6 @@ class PipeServer():
     if buffer_size != self.buffer_size:
       print(buffer_size)
       try:
-        self.audio_stream.stop_stream()
         self.audio_stream_close()
       except Exception:
         pass
