@@ -91,13 +91,6 @@ void Pipe::disconnectPipe() {
   sock = -1;
 }
 
-/*
-bool Pipe::sendData(void *data, int n) {
-  send(sock, (char *)data, n, 0);
-  return true;
-}
-*/
-
 bool Pipe::sendData(void *data, int n) {
   if (n <= 0) return false;
 
