@@ -34,7 +34,7 @@ class PipeServer():
           command = int.from_bytes(command, "little")
           self.do(command)
 
-  def disconnect(self):
+  def flush(self):
     self.client_buf.queue.clear()
     self.buffer_size = 0
 
@@ -107,6 +107,6 @@ if __name__ == "__main__":
     pipe_server.listen(pa)
 
     print("** pipe closed")
-    pipe_server.disconnect()
+    pipe_server.flush()
     time.sleep(1)
     
