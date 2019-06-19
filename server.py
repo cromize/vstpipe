@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
-import socket
-import pyaudio
 import time
 import queue
+import socket
+import signal
+import pyaudio
+import threading
+
+# drop python KeyboardInterrupt handle
+signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 class PipeCommand:
   NONE_COMMAND = 0
@@ -17,8 +22,16 @@ class PipeServer():
     self.buffer_size = 0
     self.audio_stream = None
     self.ready = False
+    self.running = False
 
-  def listen(self, pa):
+  def run(self):
+    while self.running:
+      self.listen()
+      print("** pipe closed")
+      self.flush()
+      time.sleep(0.25)
+
+  def listen(self):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
       s.bind((self.host, self.port))
       s.listen(1)
@@ -102,11 +115,9 @@ if __name__ == "__main__":
   # init audio output
   pa = pyaudio.PyAudio()
 
+  # run socket thread
+  pipe_server.running = True
+  sock_thread = threading.Thread(target=pipe_server.run())
+  sock_thread.start()
   while True:
-    # listen
-    pipe_server.listen(pa)
-
-    print("** pipe closed")
-    pipe_server.flush()
-    time.sleep(1)
-    
+    time.sleep(0.25)
