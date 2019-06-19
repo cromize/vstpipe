@@ -15,9 +15,7 @@ class PipeServer():
     self.port = port
     self.client_buf = queue.Queue()
     self.buffer_size = 0
-    self.sock = None
     self.audio_stream = None
-    self.is_audio_stream_open = False
     self.ready = False
 
   def listen(self, pa):
@@ -26,23 +24,25 @@ class PipeServer():
       s.listen(1)
       self.c, addr = s.accept()
       with self.c:
-        print("** pipe connected", addr)
+        print("\n** pipe connected", addr)
         self.ready = True
         while self.ready:
+          # accept command from client
           command = self.recvData(1)
           if command == None:
             continue
           command = int.from_bytes(command, "little")
           self.do(command)
-          if not self.audio_stream_open:
-            self.audio_stream_open(44100, self.buffer_size)
-            self.audio_stream.start_stream()
-            self.is_audio_stream_open = True
+
+  def disconnect(self):
+    self.client_buf.queue.clear()
+    self.buffer_size = 0
 
   def get_audio_chunk(self, in_data, frame_count, time_info, status):
     return (self.client_buf.get(), pyaudio.paContinue)
 
   def recvData(self, n):
+    # recv all data
     remaining = 0
     buf = b""
     while len(buf) < n:
@@ -52,20 +52,14 @@ class PipeServer():
     return buf
 
   def process(self):
+    # update buffer size from DAW
     buffer_size = int.from_bytes(self.recvData(4), "little")
     if buffer_size != self.buffer_size:
-      print(buffer_size)
-      try:
-        self.audio_stream_close()
-      except Exception:
-        pass
-
-      self.audio_stream_open(44100, buffer_size)
-      self.audio_stream.start_stream()
+      print("*** buffer size", buffer_size, "samples")
       self.buffer_size = buffer_size
-      self.is_audio_stream_open = True
+      self.audio_stream_reset()
 
-    #self.client_buf = self.recvData(2*4*self.buffer_size)
+    # audio in/out
     self.client_buf.put(self.recvData(2*4*self.buffer_size))
     self.c.send(b"")
 
@@ -78,7 +72,6 @@ class PipeServer():
       self.process()
 
   def audio_stream_open(self, sample_rate, buffer_size):
-    print("** audio stream open")
     self.audio_stream = pa.open(format=pyaudio.paFloat32,
                                 channels=2,
                                 rate=sample_rate,
@@ -87,8 +80,16 @@ class PipeServer():
                                 stream_callback=self.get_audio_chunk)
 
   def audio_stream_close(self):
-    print("** audio stream close")
     self.audio_stream.close()
+
+  def audio_stream_reset(self):
+    try:
+      self.audio_stream_close()
+    except Exception:
+      pass
+
+    self.audio_stream_open(44100, self.buffer_size)
+    self.audio_stream.start_stream()
     
 if __name__ == "__main__":
   # init pyaudio
@@ -106,5 +107,6 @@ if __name__ == "__main__":
     pipe_server.listen(pa)
 
     print("** pipe closed")
+    pipe_server.disconnect()
     time.sleep(1)
     
