@@ -135,6 +135,10 @@ void VstPipe::processReplacing (float** inputs, float** outputs, VstInt32 sample
         (*out2++) = (*remote_buf_ptr++);
       }
     }
+
+    // clean audio buffers
+    memset(local_buf, 0, sizeof(local_buf));
+    memset(remote_buf, 0, sizeof(remote_buf));
 }
 
 void VstPipe::DEBUG(char msg[]) {
