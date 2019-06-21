@@ -110,11 +110,10 @@ void VstPipe::processReplacing (float** inputs, float** outputs, VstInt32 sample
     float *remote_buf_ptr = remote_buf;
 
     VstInt32 buffer_size = sampleFrames;
-    VstInt32 leftSamples = sampleFrames;
     // interleave VST input
-    while (--leftSamples >= 0) {
-      (*local_buf_ptr++) = (*in1);
-      (*local_buf_ptr++) = (*in2);
+    for (int i = 0; i < sampleFrames; i++) {
+      (*local_buf_ptr++) = (*(in1 + i));
+      (*local_buf_ptr++) = (*(in2 + i));
     }
 
     // audio is sent/received as interleaved stereo

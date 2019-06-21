@@ -28,8 +28,6 @@ class AudioDevice():
                                     input_device_index=device_index,
                                     as_loopback=True)
                                     #stream_callback=self.get_audio_chunk)
-        self.sample_rate = sample_rate
-        self.buffer_size = buffer_size
       except Exception as e:
         print(e)
         #print("*** audio device doesn't support loopback")
@@ -42,6 +40,8 @@ class AudioDevice():
                                   frames_per_buffer=buffer_size,
                                   output=True,
                                   stream_callback=audio_callback)
+    self.sample_rate = sample_rate
+    self.buffer_size = buffer_size
 
   def audio_stream_close(self):
     self.audio_stream.close()

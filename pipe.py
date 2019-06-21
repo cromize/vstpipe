@@ -94,7 +94,7 @@ class PipeServer():
         self.client_buf.put(self.recvData(2*4*self.buffer_size))
       except Exception as e:
         print(e)
-      self.c.send(b"")
+      self.c.sendall(2*4*self.buffer_size*b"\x00")
 
   def do(self, command):
     if command == PipeCommand.NONE_COMMAND:
