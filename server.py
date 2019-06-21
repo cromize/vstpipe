@@ -5,7 +5,10 @@ import queue
 import socket
 import signal
 import pyaudio
+import argparse
 import threading
+
+# TODO: address/port selection
 
 # drop python KeyboardInterrupt handle
 signal.signal(signal.SIGINT, signal.SIG_DFL)
@@ -22,6 +25,7 @@ class PipeServer():
     self.client_buf = queue.Queue()
     self.buffer_size = 0
     self.audio_stream = None
+    self.audio_dev_info = None
     self.ready = False
     self.running = False
 
@@ -122,23 +126,28 @@ class PipeServer():
     self.audio_stream.start_stream()
 
   def audio_device_select(self, pa):
+    # no device
     if pa.get_default_input_device_info() == -1:
       print("*** no usable device found")
       sys.exit(1)
 
     # print WASAPI devices
-    print("\naudio devices: ")
+    print("\nrecordable audio devices: ")
     for i in range(pa.get_device_count()):
       info = pa.get_device_info_by_index(i)
-      #if info['hostApi'] != 1:
-        #continue
-      print(f" * {info['index']}: {info['name']} ({info['defaultSampleRate']})")
+      if info['hostApi'] != 1:
+        continue
+      print(f" * {info['index']}: {info['name']} (sample rate: {int(info['defaultSampleRate'])} kHz)")
 
+    # select device
     userin = input("\nselect device: ")
     if not userin.isdigit():
       print("*** bad input")
       sys.exit(1)
-    return int(userin)
+
+    # save selected
+    info = pa.get_device_info_by_index(int(userin))
+    self.audio_dev_info = info
 
   def audio_device_read(self):
     data = self.audio_stream.read(512)
@@ -146,6 +155,14 @@ class PipeServer():
     return data
     
 if __name__ == "__main__":
+  # TODO: we need to warn user, when there is samplerate or buffersize mismatch
+
+  # init argparse
+  parser = argparse.ArgumentParser(description="Bi-directional audio pipe server")
+  parser.add_argument('-i', '--input', action='store_true', default=False, help='capture windows audio')
+  parser.add_argument('-s', '--audio-device', metavar='id', help='select audio device')
+  args = parser.parse_args()
+
   # init pyaudio
   print("** audio output init")
   pa = pyaudio.PyAudio()
@@ -154,19 +171,23 @@ if __name__ == "__main__":
   print("** pipe server init")
   pipe_server = PipeServer("127.0.0.1", 24325)
 
-  audio_device_id = pipe_server.audio_device_select(pa)
-  pipe_server.audio_stream_open(44100, 512, audio_device_id, input=True)
-  rec = []
-  for i in range(int(44100/512*5)):
-    rec.append(pipe_server.audio_device_read())
+  # select audio input/output mode
+  if args.input:
+    # audio capture mode
+    pipe_server.audio_device_select(pa)
+  else:
+    # output mode
+    pipe_server.audio_dev_info = pa.get_default_output_device_info()
+  
+  # manual device selection
+  if args.audio_device:
+    pipe_server.audio_dev_info = pa.get_device_info_by_index(args.audio_device)
 
-  import wave
-  wavefile = wave.open("test.wav", 'wb')
-  wavefile.setnchannels(2)
-  wavefile.setsampwidth(pa.get_sample_size(pyaudio.paInt16))
-  wavefile.setframerate(44100)
-  wavefile.writeframes(b"".join(rec))
-  wavefile.close()
+  samplerate = int(pipe_server.audio_dev_info['defaultSampleRate'])
+  print(f"\n*** selected mode: {'AUDIO INPUT -> VST' if args.input else 'AUDIO OUTPUT <- VST'}")
+  print(f"*** selected device: {pipe_server.audio_dev_info['name']}")
+  print(f"*** sample rate: {samplerate} kHz")
+
   sys.exit(0)
 
   # run socket thread
