@@ -1,95 +1,23 @@
 #!/usr/bin/env python3
 import sys
 import time
-import queue
-import socket
 import signal
 import pyaudio
 import argparse
 import threading
+from pipe import PipeServer
 
 # TODO: address/port selection
+# TODO: we need to warn user, when there is samplerate or buffersize mismatch
 
 # drop python KeyboardInterrupt handle
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
-class PipeCommand:
-  NONE_COMMAND = 0
-  QUIT_COMMAND = 1
-  AUDIO_PROCESS_COMMAND = 2
+class AudioDevice():
+  def __init__(self):
+    self.info = None
 
-class PipeServer():
-  def __init__(self, host, port):
-    self.host = host
-    self.port = port
-    self.client_buf = queue.Queue()
-    self.buffer_size = 0
-    self.audio_stream = None
-    self.audio_dev_info = None
-    self.ready = False
-    self.running = False
-
-  def run(self):
-    while self.running:
-      self.listen()
-      print("** pipe closed")
-      self.flush()
-      time.sleep(0.25)
-
-  def listen(self):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-      s.bind((self.host, self.port))
-      s.listen(1)
-      self.c, addr = s.accept()
-      with self.c:
-        print("\n** pipe connected", addr)
-        self.ready = True
-        while self.ready:
-          # accept command from client
-          command = self.recvData(1)
-          if command == None:
-            continue
-          command = int.from_bytes(command, "little")
-          self.do(command)
-
-  def flush(self):
-    self.client_buf.queue.clear()
-    self.buffer_size = 0
-
-  def get_audio_chunk(self, in_data, frame_count, time_info, status):
-    return (self.client_buf.get(), pyaudio.paContinue)
-
-  def recvData(self, n):
-    # recv all data
-    remaining = 0
-    buf = b""
-    while len(buf) < n:
-      buf += self.c.recv(n)
-      if (len(buf) <= 0):
-        return False
-    return buf
-
-  def process(self):
-    # update buffer size from DAW
-    buffer_size = int.from_bytes(self.recvData(4), "little")
-    if buffer_size != self.buffer_size:
-      print("*** buffer size", buffer_size, "samples")
-      self.buffer_size = buffer_size
-      self.audio_stream_reset()
-
-    # audio in/out
-    self.client_buf.put(self.recvData(2*4*self.buffer_size))
-    self.c.send(b"")
-
-  def do(self, command):
-    if command == PipeCommand.NONE_COMMAND:
-      self.ready = False
-    elif command == PipeCommand.QUIT_COMMAND:
-      self.ready = False
-    elif command == PipeCommand.AUDIO_PROCESS_COMMAND:
-      self.process()
-
-  def audio_stream_open(self, sample_rate, buffer_size, device_index=0, input=False):
+  def audio_stream_open(self, sample_rate, buffer_size, device_index=0, input=False, audio_callback=None):
     if input:
       try:
         self.audio_stream = pa.open(format=pyaudio.paInt16,
@@ -100,9 +28,11 @@ class PipeServer():
                                     input_device_index=device_index,
                                     as_loopback=True)
                                     #stream_callback=self.get_audio_chunk)
+        self.sample_rate = sample_rate
+        self.buffer_size = buffer_size
       except Exception as e:
         print(e)
-        print("*** audio device doesn't support loopback")
+        #print("*** audio device doesn't support loopback")
         sys.exit(1)
 
     else:
@@ -111,7 +41,7 @@ class PipeServer():
                                   rate=sample_rate,
                                   frames_per_buffer=buffer_size,
                                   output=True,
-                                  stream_callback=self.get_audio_chunk)
+                                  stream_callback=audio_callback)
 
   def audio_stream_close(self):
     self.audio_stream.close()
@@ -146,8 +76,7 @@ class PipeServer():
       sys.exit(1)
 
     # save selected
-    info = pa.get_device_info_by_index(int(userin))
-    self.audio_dev_info = info
+    self.info = pa.get_device_info_by_index(int(userin))
 
   def audio_device_read(self):
     data = self.audio_stream.read(512)
@@ -155,8 +84,6 @@ class PipeServer():
     return data
     
 if __name__ == "__main__":
-  # TODO: we need to warn user, when there is samplerate or buffersize mismatch
-
   # init argparse
   parser = argparse.ArgumentParser(description="Bi-directional audio pipe server")
   parser.add_argument('-i', '--input', action='store_true', default=False, help='capture windows audio')
@@ -169,26 +96,25 @@ if __name__ == "__main__":
 
   # init pipe server
   print("** pipe server init")
-  pipe_server = PipeServer("127.0.0.1", 24325)
+  pipe_server = PipeServer("127.0.0.1", 24325, AudioDevice())
 
   # select audio input/output mode
   if args.input:
     # audio capture mode
-    pipe_server.audio_device_select(pa)
+    pipe_server.input_mode = True
+    pipe_server.audio_device.audio_device_select(pa)
   else:
     # output mode
-    pipe_server.audio_dev_info = pa.get_default_output_device_info()
+    pipe_server.audio_device.info = pa.get_default_output_device_info()
   
   # manual device selection
   if args.audio_device:
-    pipe_server.audio_dev_info = pa.get_device_info_by_index(args.audio_device)
+    pipe_server.audio_device.info = pa.get_device_info_by_index(args.audio_device)
 
-  samplerate = int(pipe_server.audio_dev_info['defaultSampleRate'])
+  samplerate = int(pipe_server.audio_device.info['defaultSampleRate'])
   print(f"\n*** selected mode: {'AUDIO INPUT -> VST' if args.input else 'AUDIO OUTPUT <- VST'}")
-  print(f"*** selected device: {pipe_server.audio_dev_info['name']}")
+  print(f"*** selected device: {pipe_server.audio_device.info['name']}")
   print(f"*** sample rate: {samplerate} kHz")
-
-  sys.exit(0)
 
   # run socket thread
   pipe_server.running = True
