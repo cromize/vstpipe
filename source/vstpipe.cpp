@@ -23,7 +23,8 @@ VstPipe::VstPipe (audioMasterCallback audioMaster)
   // init audio pipe
   audio_pipe = new Pipe();
   audio_pipe->init();
-  memset(buf, 0, sizeof(buf));
+  memset(local_buf, 0, sizeof(local_buf));
+  memset(remote_buf, 0, sizeof(remote_buf));
 }
 
 //-------------------------------------------------------------------------------------------------------
@@ -105,20 +106,35 @@ void VstPipe::processReplacing (float** inputs, float** outputs, VstInt32 sample
     float* out1 = outputs[0];
     float* out2 = outputs[1];
 
-    float *buf_ptr = buf;
+    float *local_buf_ptr = local_buf;
+    float *remote_buf_ptr = remote_buf;
 
-    // audio is sent as interleaved stereo
     VstInt32 buffer_size = sampleFrames;
-    while (--sampleFrames >= 0) {
-      (*buf_ptr++) = (*in1);
-      (*buf_ptr++) = (*in2);
-
-      (*out1++) = (*in1++);
-      (*out2++) = (*in2++);
+    VstInt32 leftSamples = sampleFrames;
+    // interleave VST input
+    while (--leftSamples >= 0) {
+      (*local_buf_ptr++) = (*in1);
+      (*local_buf_ptr++) = (*in2);
     }
 
+    // audio is sent/received as interleaved stereo
     audio_pipe->sendData<uint8_t>(PipeCommand::AUDIO_PROCESS_COMMAND);
-    audio_pipe->process(buf, 0, buffer_size);
+    audio_pipe->process(local_buf, remote_buf, buffer_size);
+
+    while (--sampleFrames >= 0) {
+      // threshold noise
+      float r = (float) rand() / RAND_MAX;
+			r = 1.f - 2.f * r;
+			r *= 1.5e-5f;
+
+      if (remote_buf[0] == 0) {
+        (*out1++) = (*in1++) + r;
+        (*out2++) = (*in2++) + r;
+      } else {
+        (*out1++) = (*remote_buf_ptr++);
+        (*out2++) = (*remote_buf_ptr++);
+      }
+    }
 }
 
 void VstPipe::DEBUG(char msg[]) {

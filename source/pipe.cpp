@@ -108,7 +108,16 @@ bool Pipe::sendData(void *data, int n) {
 
 bool Pipe::recvData(void *data, int n) {
   if (n <= 0) return false;
-  recv(sock, (char *)data, n, 0);
+
+  int remaining = 0;
+  while (remaining < n) {
+    int actual = recv(sock, (char *)data + remaining, n - remaining, 0);
+    if (actual <= 0) {
+      ready = false;
+      return false;
+    }
+    remaining += actual;
+  }
   return true;
 }
 

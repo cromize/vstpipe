@@ -86,7 +86,8 @@ class PipeServer():
     if self.input_mode:
       # send windows input
       self.recvData(2*4*self.buffer_size)
-      self.c.send(self.audio_device.audio_stream.read(2*4*self.buffer_size))
+      data = self.audio_device.audio_stream.read(self.buffer_size)
+      self.c.sendall(data)
     else:
       # recv from VST
       try:

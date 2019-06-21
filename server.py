@@ -20,7 +20,7 @@ class AudioDevice():
   def audio_stream_open(self, sample_rate, buffer_size, device_index=0, input=False, audio_callback=None):
     if input:
       try:
-        self.audio_stream = pa.open(format=pyaudio.paInt16,
+        self.audio_stream = pa.open(format=pyaudio.paFloat32,
                                     channels=2,
                                     rate=sample_rate,
                                     frames_per_buffer=buffer_size,
