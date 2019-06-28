@@ -52,7 +52,7 @@ class PipeServer():
     buf = b""
     while len(buf) < n:
       buf += self.c.recv(n)
-      if (len(buf) <= 0):
+      if len(buf) <= 0:
         return False
     return buf
 
@@ -62,7 +62,6 @@ class PipeServer():
     else:
       return (b"", pyaudio.paAbort)
       
-
   def process(self):
     # update buffer size from DAW
     buffer_size = int.from_bytes(self.recvData(4), "little")
@@ -81,12 +80,18 @@ class PipeServer():
                                           input=self.input_mode, audio_callback=self.get_audio_chunk)
       self.audio_device.audio_stream.start_stream()
 
+    if not self.audio_device.audio_stream.is_active():
+      self.audio_device.audio_stream_open(44100, self.buffer_size,
+                                          self.audio_device.info['index'],
+                                          input=self.input_mode, audio_callback=self.get_audio_chunk)
+      self.audio_device.audio_stream.start_stream()
+
     # audio in/out
     # TODO: handle this more intelligently
     if self.input_mode:
       # send windows input
       self.recvData(2*4*self.buffer_size)
-      data = self.audio_device.audio_stream.read(self.buffer_size)
+      data = self.audio_device.audio_stream.read(self.buffer_size) or self.buffer_size*b"\x00"
       self.c.sendall(data)
     else:
       # recv from VST

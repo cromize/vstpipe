@@ -26,6 +26,7 @@ public:
   bool sendData(void *data, int n);
   bool recvData(void *data, int n);
   bool isReady();
+  void flush();
 
   template <typename T>
   bool sendData(T x) {

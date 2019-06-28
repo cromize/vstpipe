@@ -24,5 +24,5 @@ Same thing can be done using JACK, but vstpipe is simpler to setup.
 
 ## Notes
 
-* https://github.com/intxcc/pyaudio_portaudio/ is required to be able to capture desktop output using pyaudio. It contains small patch that allows to record desktop output.
+* https://github.com/intxcc/pyaudio_portaudio/ is required to be able to capture desktop output using pyaudio. It contains small patch that allows it to record the desktop output.
 * You need to include VST 2.4 SDK in Visual Studio dependencies to compile from source.

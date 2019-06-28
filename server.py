@@ -8,7 +8,6 @@ import threading
 from pipe import PipeServer
 
 # TODO: address/port selection
-# TODO: we need to warn user, when there is samplerate or buffersize mismatch
 
 # drop python KeyboardInterrupt handle
 signal.signal(signal.SIGINT, signal.SIG_DFL)
