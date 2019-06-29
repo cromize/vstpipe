@@ -1,6 +1,6 @@
 # vstpipe
 
-vstpipe is simple VST plugin for bi-directional audio piping into DAW. It uses socket pipe for audio stream and could easily work over network.
+vstpipe is simple VST plugin for bi-directional audio piping from/into DAW. It uses socket pipe for audio stream and could easily work over network.
 
 Audio is sent as 32-bit interleaved stereo. You can play and route input/output using included server.py. Buffer size is set automatically. You can find pre-build version build folder. Older version using Windows namedpipe is in branch namedpipe.
 
