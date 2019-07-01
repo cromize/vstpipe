@@ -130,8 +130,8 @@ void VstPipe::processReplacing (float** inputs, float** outputs, VstInt32 sample
         (*out1++) = (*in1++) + r;
         (*out2++) = (*in2++) + r;
       } else {
-        (*out1++) = (*remote_buf_ptr++);
-        (*out2++) = (*remote_buf_ptr++);
+        (*out1++) = (*remote_buf_ptr++) + r;
+        (*out2++) = (*remote_buf_ptr++) + r;
       }
     }
 

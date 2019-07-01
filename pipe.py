@@ -22,6 +22,7 @@ class PipeServer():
 
   def run(self):
     while self.running:
+      print("\n** listening for pipe")
       self.listen()
       print("** pipe closed")
       self.flush()
@@ -31,9 +32,16 @@ class PipeServer():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
       s.bind((self.host, self.port))
       s.listen(1)
-      self.c, addr = s.accept()
+      s.setblocking(False)
+      while True:
+        try:
+          self.c, addr = s.accept()
+          break
+        except BlockingIOError:
+          continue 
       with self.c:
         print("\n** pipe connected", addr)
+        self.c.setblocking(True)
         self.ready = True
         while self.ready:
           # accept command from client
@@ -57,6 +65,9 @@ class PipeServer():
     return buf
 
   def get_audio_chunk(self, in_data, frame_count, time_info, status):
+    if in_data:
+      self.client_buf.put(in_data)
+      return (None, pyaudio.paContinue)
     if not self.client_buf.empty():
       return (self.client_buf.get(), pyaudio.paContinue)
     else:
@@ -66,7 +77,7 @@ class PipeServer():
     # update buffer size from DAW
     buffer_size = int.from_bytes(self.recvData(4), "little")
     if buffer_size != self.buffer_size:
-      print("*** buffer size", buffer_size, "samples")
+      print("** buffer size", buffer_size, "samples")
       self.buffer_size = buffer_size
       #self.audio_device.audio_stream_reset()
 
@@ -91,8 +102,10 @@ class PipeServer():
     if self.input_mode:
       # send windows input
       self.recvData(2*4*self.buffer_size)
-      data = self.audio_device.audio_stream.read(self.buffer_size) or self.buffer_size*b"\x00"
-      self.c.sendall(data)
+      try:
+        self.c.sendall(self.client_buf.get_nowait())
+      except queue.Empty:
+        self.c.sendall(2*4*self.buffer_size*b"\x00")
     else:
       # recv from VST
       try:

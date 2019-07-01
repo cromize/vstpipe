@@ -9,9 +9,6 @@ from pipe import PipeServer
 
 # TODO: address/port selection
 
-# drop python KeyboardInterrupt handle
-signal.signal(signal.SIGINT, signal.SIG_DFL)
-
 class AudioDevice():
   def __init__(self):
     self.info = None
@@ -25,8 +22,8 @@ class AudioDevice():
                                     frames_per_buffer=buffer_size,
                                     input=True,
                                     input_device_index=device_index,
-                                    as_loopback=True)
-                                    #stream_callback=self.get_audio_chunk)
+                                    as_loopback=True,
+                                    stream_callback=audio_callback)
       except Exception as e:
         print(e)
         #print("*** audio device doesn't support loopback")
@@ -101,14 +98,15 @@ if __name__ == "__main__":
   if args.input:
     # audio capture mode
     pipe_server.input_mode = True
-    pipe_server.audio_device.audio_device_select(pa)
+    if not args.audio_device:
+      pipe_server.audio_device.audio_device_select(pa)
   else:
     # output mode
     pipe_server.audio_device.info = pa.get_default_output_device_info()
   
   # manual device selection
   if args.audio_device:
-    pipe_server.audio_device.info = pa.get_device_info_by_index(args.audio_device)
+    pipe_server.audio_device.info = pa.get_device_info_by_index(int(args.audio_device))
 
   samplerate = int(pipe_server.audio_device.info['defaultSampleRate'])
   print(f"\n*** selected mode: {'AUDIO INPUT -> VST' if args.input else 'AUDIO OUTPUT <- VST'}")
