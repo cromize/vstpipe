@@ -79,20 +79,20 @@ class PipeServer():
     if buffer_size != self.buffer_size:
       print("** buffer size", buffer_size, "samples")
       self.buffer_size = buffer_size
-      #self.audio_device.audio_stream_reset()
+      #self.audio_device.reset()
 
       try:
-        self.audio_device.audio_stream_close()
+        self.audio_device.close()
       except Exception:
         pass
 
-      self.audio_device.audio_stream_open(44100, self.buffer_size,
+      self.audio_device.open(44100, self.buffer_size,
                                           self.audio_device.info['index'],
                                           input=self.input_mode, audio_callback=self.get_audio_chunk)
       self.audio_device.audio_stream.start_stream()
 
     if not self.audio_device.audio_stream.is_active():
-      self.audio_device.audio_stream_open(44100, self.buffer_size,
+      self.audio_device.open(44100, self.buffer_size,
                                           self.audio_device.info['index'],
                                           input=self.input_mode, audio_callback=self.get_audio_chunk)
       self.audio_device.audio_stream.start_stream()

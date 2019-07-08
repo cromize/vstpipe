@@ -16,6 +16,8 @@ Same thing can be done using JACK, but vstpipe is simpler to setup.
 
 # DESKTOP AUDIO --> VST mode
 ./server.py -i
+
+# -s id (optional audio device select)
 ```
 
 * **DESKTOP AUDIO <-- VST** mode could be useful for piping DAW audio out to headphones connected to internal soundcard, when your external soundcard doesn't have separate channel for headphones. Or for piping audio into obs, when low-latency ASIO is used as main driver.
