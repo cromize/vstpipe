@@ -13,7 +13,7 @@ class PipeServer():
   def __init__(self, host, port, audio_device):
     self.host = host
     self.port = port
-    self.client_buf = queue.Queue()
+    self.client_buf = queue.Queue(5)
     self.buffer_size = 0
     self.audio_device = audio_device
     self.ready = False
@@ -47,6 +47,7 @@ class PipeServer():
           # accept command from client
           command = self.recvData(1)
           if command == None:
+            self.client_buf.queue.clear()
             continue
           command = int.from_bytes(command, "little")
           self.do(command)
@@ -78,24 +79,9 @@ class PipeServer():
     buffer_size = int.from_bytes(self.recvData(4), "little")
     if buffer_size != self.buffer_size:
       print("** buffer size", buffer_size, "samples")
+      self.audio_device.buffer_size = buffer_size
       self.buffer_size = buffer_size
-      #self.audio_device.reset()
-
-      try:
-        self.audio_device.close()
-      except Exception:
-        pass
-
-      self.audio_device.open(44100, self.buffer_size,
-                                          self.audio_device.info['index'],
-                                          input=self.input_mode, audio_callback=self.get_audio_chunk)
-      self.audio_device.audio_stream.start_stream()
-
-    if not self.audio_device.audio_stream.is_active():
-      self.audio_device.open(44100, self.buffer_size,
-                                          self.audio_device.info['index'],
-                                          input=self.input_mode, audio_callback=self.get_audio_chunk)
-      self.audio_device.audio_stream.start_stream()
+      self.reset()
 
     # audio in/out
     # TODO: handle this more intelligently
@@ -121,4 +107,19 @@ class PipeServer():
       self.ready = False
     elif command == PipeCommand.AUDIO_PROCESS_COMMAND:
       self.process()
+
+  def reset(self):
+    try:
+      self.audio_device.close()
+    except Exception:
+      pass
+
+    # reopen with new buffer size
+    for i in range(2):
+      self.audio_device.open(self.buffer_size,
+                             self.audio_device.info['index'],
+                             input=self.input_mode, audio_callback=self.get_audio_chunk)
+      self.audio_device.audio_stream.start_stream()
+      if self.audio_device.audio_stream.is_active():
+        break
 

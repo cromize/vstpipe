@@ -13,7 +13,9 @@ class AudioDevice():
   def __init__(self):
     self.info = None
 
-  def open(self, sample_rate, buffer_size, device_index=0, input=False, audio_callback=None):
+  def open(self, buffer_size, device_index=0, sample_rate=44100,\
+           input=False, audio_callback=None):
+
     args = {'format': pyaudio.paFloat32,
             'channels': 2,
             'rate': sample_rate,
@@ -33,20 +35,8 @@ class AudioDevice():
       args['output'] = True
       self.audio_stream = pa.open(**args)
 
-    self.sample_rate = sample_rate
-    self.buffer_size = buffer_size
-
   def close(self):
     self.audio_stream.close()
-
-  def reset(self):
-    try:
-      self.close()
-    except Exception:
-      pass
-
-    self.open(44100, self.buffer_size)
-    self.audio_stream.start_stream()
 
   def support_loopback(self):
     try:

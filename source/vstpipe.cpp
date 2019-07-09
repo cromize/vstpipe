@@ -123,8 +123,8 @@ void VstPipe::processReplacing (float** inputs, float** outputs, VstInt32 sample
     while (--sampleFrames >= 0) {
       // threshold noise
       float r = (float) rand() / RAND_MAX;
-			r = 1.f - 2.f * r;
-			r *= 1.5e-5f;
+      r = 1.f - 2.f * r;
+      r *= 1.5e-5f;
 
       if (remote_buf[0] == 0) {
         (*out1++) = (*in1++) + r;
