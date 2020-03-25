@@ -2,6 +2,7 @@
 #define PIPE_H
 
 #include <thread>
+#include "windows.h"
 #pragma once
 
 const char PIPE_HOST[] = "127.0.0.1";
