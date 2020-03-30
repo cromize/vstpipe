@@ -64,7 +64,7 @@ void Pipe::connectPipe() {
   sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
   // Nagle off
-  setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char*)1, sizeof(int));
+  setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char*)0, sizeof(int));
 
   // check socket
   if (sock < 0) {
