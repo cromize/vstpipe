@@ -124,7 +124,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <ModuleDefinitionFile>../../win/vstplug.def</ModuleDefinitionFile>
+      <ModuleDefinitionFile>./vstplug.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX64</TargetMachine>
