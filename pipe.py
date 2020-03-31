@@ -13,7 +13,7 @@ class PipeServer():
   def __init__(self, host, port, audio_device):
     self.host = host
     self.port = port
-    self.client_buf = collections.deque(maxlen=50)
+    self.client_buf = collections.deque(maxlen=20)
     self.buffer_size = 0
     self.audio_device = audio_device
     self.ready = False
@@ -67,9 +67,11 @@ class PipeServer():
     return buf
 
   def get_audio_chunk(self, in_data, frame_count, time_info, status):
+    # windows audio capture
     if in_data:
-      self.client_buf.append(in_data)
+      self.client_buf.appendleft(in_data)
       return (None, pyaudio.paContinue)
+    # receive audio from vst
     if len(self.client_buf) != 0:
       return (self.client_buf.pop(), pyaudio.paContinue)
     else:
@@ -80,8 +82,8 @@ class PipeServer():
     buffer_size = int.from_bytes(self.recvData(4), "little")
     if buffer_size != self.buffer_size:
       print("** buffer size", buffer_size, "samples")
-      self.audio_device.buffer_size = buffer_size
       self.buffer_size = buffer_size
+      self.client_buf.clear()
       self.reset()
 
     # audio in/out
@@ -111,6 +113,7 @@ class PipeServer():
 
   def reset(self):
     try:
+      self.audio_device.audio_stream.stop_stream()
       self.audio_device.close()
     except Exception:
       pass
