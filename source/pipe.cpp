@@ -66,7 +66,6 @@ void Pipe::connectPipe() {
   inet_pton(AF_INET, PIPE_HOST, &sa.sin_addr.s_addr);
   sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-  // Nagle off
   setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char*)0, sizeof(int));
 
   // check socket
@@ -85,6 +84,7 @@ void Pipe::connectPipe() {
 void Pipe::disconnectPipe() {
   ready = false;
   if (sock >= 0) {
+    flush();
     sendData<uint8_t>(PipeCommand::QUIT_COMMAND);
     shutdown(sock, SD_SEND);
     if (closesocket(sock)) {
@@ -129,6 +129,7 @@ bool Pipe::isReady() {
 }
 
 void Pipe::flush() {
+  // Nagle off and on
   setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char*)1, sizeof(int));
   setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char*)0, sizeof(int));
 }
