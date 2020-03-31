@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import sys
 import time
-import signal
 import pyaudio
 import argparse
 import threading
@@ -70,11 +69,6 @@ class AudioDevice():
     # save selected
     self.info = pa.get_device_info_by_index(int(userin))
 
-  def read(self):
-    data = self.audio_stream.read(512)
-    print(data)
-    return data
-    
 if __name__ == "__main__":
   # init argparse
   parser = argparse.ArgumentParser(description="bi-directional audio pipe server")
