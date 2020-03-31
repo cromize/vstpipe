@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <thread>
+#include <mutex>
 #include "vstpipe.h"
 #include "pipe.h"
 #include "windows.h"

@@ -45,6 +45,7 @@ private:
   char pipe_name[32];
   std::thread main_thread;
   SOCKET sock;
+  std::recursive_mutex mutex;
 };
 
 #endif

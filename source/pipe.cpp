@@ -1,4 +1,5 @@
 #include <chrono>
+#include <mutex>
 #include <stdio.h>
 #include <ws2tcpip.h>
 #include "pipe.h"
@@ -46,6 +47,8 @@ void Pipe::run() {
 
 void Pipe::process(float *input, float *output, int frames) {
   if (!ready) return;
+
+  std::lock_guard<std::recursive_mutex> lock(mutex);
 
   // send buffer size
   sendData<uint32_t>(frames);
