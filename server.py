@@ -11,6 +11,7 @@ from pipe import PipeServer
 
 class AudioDevice():
   def __init__(self):
+    self.audio_stream = None
     self.info = None
 
   def open(self, buffer_size, device_index=0, sample_rate=44100,\

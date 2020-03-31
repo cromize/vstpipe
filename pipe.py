@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import time
-import queue
 import socket
 import pyaudio
+import collections
 
 class PipeCommand:
   NONE_COMMAND = 0
@@ -13,7 +13,7 @@ class PipeServer():
   def __init__(self, host, port, audio_device):
     self.host = host
     self.port = port
-    self.client_buf = queue.Queue(5)
+    self.client_buf = collections.deque(maxlen=50)
     self.buffer_size = 0
     self.audio_device = audio_device
     self.ready = False
@@ -33,6 +33,7 @@ class PipeServer():
       s.bind((self.host, self.port))
       s.listen(1)
       s.setblocking(False)
+      s.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
       while True:
         try:
           self.c, addr = s.accept()
@@ -47,13 +48,13 @@ class PipeServer():
           # accept command from client
           command = self.recvData(1)
           if command == None:
-            self.client_buf.queue.clear()
+            self.client_buf.clear()
             continue
           command = int.from_bytes(command, "little")
           self.do(command)
 
   def flush(self):
-    self.client_buf.queue.clear()
+    self.client_buf.clear()
     self.buffer_size = 0
 
   def recvData(self, n):
@@ -67,12 +68,12 @@ class PipeServer():
 
   def get_audio_chunk(self, in_data, frame_count, time_info, status):
     if in_data:
-      self.client_buf.put(in_data)
+      self.client_buf.append(in_data)
       return (None, pyaudio.paContinue)
-    if not self.client_buf.empty():
-      return (self.client_buf.get(), pyaudio.paContinue)
+    if len(self.client_buf) != 0:
+      return (self.client_buf.pop(), pyaudio.paContinue)
     else:
-      return (b"", pyaudio.paAbort)
+      return (2*4*self.buffer_size*b"\x00", pyaudio.paContinue)
       
   def process(self):
     # update buffer size from DAW
@@ -88,14 +89,14 @@ class PipeServer():
     if self.input_mode:
       # send windows input
       self.recvData(2*4*self.buffer_size)
-      try:
-        self.c.sendall(self.client_buf.get_nowait())
-      except queue.Empty:
+      if len(self.client_buf) != 0:
+        self.c.sendall(self.client_buf.pop())
+      else:
         self.c.sendall(2*4*self.buffer_size*b"\x00")
     else:
       # recv from VST
       try:
-        self.client_buf.put(self.recvData(2*4*self.buffer_size))
+        self.client_buf.appendleft(self.recvData(2*4*self.buffer_size))
       except Exception as e:
         print(e)
       self.c.sendall(2*4*self.buffer_size*b"\x00")

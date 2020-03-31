@@ -22,7 +22,6 @@ VstPipe::VstPipe (audioMasterCallback audioMaster)
 
   // init audio pipe
   audio_pipe = new Pipe();
-  audio_pipe->init();
   memset(local_buf, 0, sizeof(local_buf));
   memset(remote_buf, 0, sizeof(remote_buf));
 }
