@@ -2,9 +2,9 @@
 
 OBS_DECLARE_MODULE()
 
-extern struct obs_source_info socket_source;
+extern void plugin_register();
 
 bool obs_module_load(void) {
-  obs_register_source(&socket_source);
+  plugin_register();
   return true;
 }

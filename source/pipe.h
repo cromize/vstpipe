@@ -1,6 +1,7 @@
 #ifndef PIPE_H
 #define PIPE_H
 
+#include <mutex>
 #include <thread>
 #include "windows.h"
 #pragma once
